@@ -1,0 +1,231 @@
+http:
+  routers:
+    # --------------------- FRONTEND ----------------------
+    frontend-router:
+      rule: "Host(`localhost`)"
+      service: frontend-service
+      entryPoints:
+        - web
+        
+    auth-swagger:
+      rule: "Host(`localhost`) && (Path(`/api/auth/swagger-ui.html`) || PathPrefix(`/api/auth/swagger-ui`) || PathPrefix(`/api/auth/api-docs`))"
+      service: auth-service
+      
+    users-swagger:
+      rule: "Host(`localhost`) && (Path(`/api/users/swagger-ui.html`) || PathPrefix(`/api/users/swagger-ui`) || PathPrefix(`/api/users/api-docs`))"
+      service: user-service
+      
+    devices-swagger:
+      rule: "Host(`localhost`) && (Path(`/api/devices/swagger-ui.html`) || PathPrefix(`/api/devices/swagger-ui`) || PathPrefix(`/api/devices/api-docs`))"
+      service: device-service
+    
+    devices-users-swagger:
+      rule: "Host(`localhost`) && (Path(`/api/devices-users/swagger-ui.html`) || PathPrefix(`/api/devices-users/swagger-ui`) || PathPrefix(`/api/devices-users/api-docs`))"
+      service: device-service
+      
+    monitor-swagger:
+      rule: "Host(`localhost`) && (Path(`/api/monitoring/swagger-ui.html`) || PathPrefix(`/api/monitoring/swagger-ui`) || PathPrefix(`/api/monitoring/api-docs`))"
+      service: monitor-service
+      
+    cs-swagger:
+      rule: "Host(`localhost`) && (Path(`/api/chat/swagger-ui.html`) || PathPrefix(`/api/chat/swagger-ui`) || PathPrefix(`/api/chat/api-docs`))"
+      service: cs-service
+
+    # ---------------------- AUTH -------------------------
+    auth-client-router:
+      rule: "PathPrefix(`/api/auth`)"
+      service: auth-service
+      entryPoints:
+        - web
+      middlewares:
+        - strip-api-prefix
+        
+    auth-admin-router:
+      rule: "PathPrefix(`/api/auth/update`) || PathPrefix(`/api/auth/unregister`)"
+      service: auth-service
+      entryPoints:
+        - web
+      middlewares:
+        - role-admin
+        - strip-api-prefix
+
+    # ---------------------- USERS ------------------------
+    users-client-router:
+      rule: "PathPrefix(`/api/users/details`) || PathPrefix(`/api/users/admins`)"
+      service: user-service
+      entryPoints:
+        - web
+      middlewares:
+        - verify-jwt
+        - strip-api-prefix
+
+    users-admin-router:
+      rule: "PathPrefix(`/api/users`) && !PathPrefix(`/api/users/admins`) && !PathPrefix(`/api/users/details`) && !PathPrefix(`/api/users/swagger-ui`) && !PathPrefix(`/api/users/api-docs`)"
+      service: user-service
+      entryPoints:
+        - web
+      middlewares:
+        - role-admin
+        - strip-api-prefix
+
+    # ---------------------- DEVICES ----------------------
+    devices-client-router:
+      rule: "PathPrefix(`/api/devices/details`)"
+      service: device-service
+      entryPoints:
+        - web
+      middlewares:
+        - verify-jwt
+        - strip-api-prefix
+
+    devices-admin-router:
+      rule: "PathPrefix(`/api/devices`) && !PathPrefix(`/api/devices-users`) && !PathPrefix(`/api/devices/swagger-ui`) && !PathPrefix(`/api/devices/api-docs`)"
+      service: device-service
+      entryPoints:
+        - web
+      middlewares:
+        - role-admin
+        - strip-api-prefix
+
+    # ------------------- DEVICES–USERS -------------------
+    devices-users-client-router:
+      rule: "PathPrefix(`/api/devices-users/details`)"
+      service: device-service
+      entryPoints:
+        - web
+      middlewares:
+        - verify-jwt
+        - strip-api-prefix
+
+    devices-users-admin-router:
+      rule: "PathPrefix(`/api/devices-users`) && !PathPrefix(`/api/devices-users/details`) && !PathPrefix(`/api/devices-users/swagger-ui`) && !PathPrefix(`/api/devices-users/api-docs`)"
+      service: device-service
+      entryPoints:
+        - web
+      middlewares:
+        - role-admin
+        - strip-api-prefix
+        
+    # --------------------- MONITORING --------------------
+    monitoring-ws:
+      rule: "PathPrefix(`/api/ws/monitor`)"
+      service: monitor-service
+      entryPoints:
+        - web
+      middlewares:
+        - strip-api-prefix
+        - websocket-upgrade
+    
+    monitoring-router:
+      rule: "PathPrefix(`/api/monitoring`) && !PathPrefix(`/api/ws/monitor`)"
+      service: monitor-service
+      entryPoints:
+        - web
+      middlewares:
+        - verify-jwt
+        - strip-api-prefix
+    
+    simulator-router:
+      rule: "PathPrefix(`/api/simulator`)"
+      service: simulator-service
+      entryPoints:
+        - web
+      middlewares:
+        - verify-jwt
+        - strip-api-prefix
+        
+  # ------------------- CUSTOMER SUPPORT ------------------
+    chat-ws:
+      rule: "PathPrefix(`/api/ws/chat`)"
+      service: ws-service
+      entryPoints:
+        - web
+      middlewares:
+        - strip-api-prefix
+        - websocket-upgrade
+        
+    chat-user-router:
+      rule: "PathPrefix(`/api/chat/send/user`) || PathPrefix(`/api/chat/send/admin`) || PathPrefix(`/api/chat/send/bot`)"
+      service: cs-service
+      entryPoints:
+        - web
+      middlewares:
+        - strip-api-prefix
+        - verify-jwt
+
+  # ---------------------- MIDDLEWARES --------------------
+  middlewares:
+    strip-api-prefix:
+      stripPrefix:
+        prefixes:
+          - "/api"
+          
+    websocket-upgrade:
+      headers:
+        customRequestHeaders:
+          Connection: "Upgrade"
+          Upgrade: "websocket"
+
+    verify-jwt:
+      forwardAuth:
+        address: "http://backend-auth:8080/auth/verify"
+        trustForwardHeader: true
+        authResponseHeaders:
+          - X-User-Id
+          - X-User
+          - X-Role
+        authRequestHeaders:
+          - Authorization
+
+    role-admin:
+      forwardAuth:
+        address: "http://backend-auth:8080/auth/authorize?role=ADMIN"
+        trustForwardHeader: true
+        authResponseHeaders:
+          - X-User-Id
+          - X-User
+          - X-Role
+        authRequestHeaders:
+          - Authorization
+
+  # ----------------------- SERVICES ----------------------
+  services:
+    frontend-service:
+      loadBalancer:
+        servers:
+          - url: "http://frontend-vite:80"
+
+    auth-service:
+      loadBalancer:
+        servers:
+          - url: "http://backend-auth:8080"
+
+    user-service:
+      loadBalancer:
+        servers:
+          - url: "http://backend-user:8080"
+
+    device-service:
+      loadBalancer:
+        servers:
+          - url: "http://backend-device:8080"
+          
+    monitor-service:
+      loadBalancer:
+        servers:
+          - url: "http://backend-monitor:8080"
+
+    cs-service:
+      loadBalancer:
+        servers:
+          - url: "http://backend-cs:8080"
+          
+    ws-service:
+      loadBalancer:
+        servers:
+          - url: "http://backend-ws:8080"
+          
+    simulator-service:
+      loadBalancer:
+        servers:
+          - url: "http://simulator-service:8000"

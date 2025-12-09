@@ -1,0 +1,244 @@
+version: "3.9"
+
+services:
+  # ---------------------- FRONTEND ----------------------
+  
+  frontend:
+    build: ./frontend
+    container_name: frontend-vite
+    networks:
+      - proxy-network
+      
+  # ---------------------- RABBITMQ ----------------------
+      
+  rabbitmq:
+    image: rabbitmq:management
+    container_name: rabbitmq
+    restart: always
+    ports:
+      - 5672:5672
+      - 15672:15672
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    configs:
+      - source: rabbitmq-plugins
+        target: /etc/rabbitmq/enabled_plugins
+    volumes:
+      - rabbitmq-lib:/var/lib/rabbitmq/
+      - rabbitmq-log:/var/log/rabbitmq
+    networks:
+      - mq-network
+  
+  # ------------------- TRAEFIK GATEWAY ------------------
+  
+  traefik:
+    image: traefik:v3.1
+    container_name: traefik
+    command:
+      - "--configFile=/etc/traefik/traefik.yml"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./traefik/traefik.yml:/etc/traefik/traefik.yml:ro"
+      - "./traefik/dynamic:/etc/traefik/dynamic:ro"
+    networks:
+      - proxy-network
+      
+  # ------------------- AUTH SERVICE ---------------------
+  
+  backend_auth:
+    build: ./backend_auth
+    container_name: backend-auth
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://auth-db:5432/auth_db
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SERVER_PORT=8080
+    env_file:
+      - ./backend_auth/.env
+    networks:
+      - proxy-network
+      - mq-network
+
+  # -------------------- USER SERVICE --------------------
+  
+  backend_user:
+    build: ./backend_user
+    container_name: backend-user
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://user-db:5432/users_db
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SERVER_PORT=8080
+    env_file:
+      - ./backend_user/.env 
+    networks:
+      - proxy-network
+      - mq-network
+
+  # ------------------- DEVICE SERVICE -------------------
+  
+  backend_device:
+    build: ./backend_device
+    container_name: backend-device
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://device-db:5432/devices_db
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SERVER_PORT=8080
+    env_file:
+      - ./backend_device/.env
+    networks:
+      - proxy-network
+      - mq-network
+      
+      
+  # ------------------- MONITOR SERVICE ------------------
+      
+  backend_monitor:
+    build: ./backend_monitor
+    container_name: backend-monitor
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://monitor-db:5432/monitor_db
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SERVER_PORT=8080
+    env_file:
+      - ./backend_monitor/.env
+    networks:
+      - proxy-network
+      - mq-network
+      
+  simulator-service:
+    build: ./simulator_service
+    container_name: simulator-service
+    env_file:
+      - ./simulator_service/.env
+    networks:
+      - proxy-network
+      - mq-network
+      
+      
+  # --------------------- CS SERVICE ---------------------
+  
+  backend_cs:
+    build: ./backend_cs
+    container_name: backend-cs
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://cs-db:5432/cs_db
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SERVER_PORT=8080
+    env_file:
+      - ./backend_cs/.env
+    networks:
+      - proxy-network
+      - mq-network
+      
+  # --------------------- WS SERVICE ---------------------
+  
+  backend_ws:
+    build: ./backend_ws
+    container_name: backend-ws
+    environment:
+      - SERVER_PORT=8080
+    env_file:
+      - ./backend_cs/.env
+    networks:
+      - proxy-network
+      - mq-network
+
+  # --------------------- DATABASES ----------------------
+  
+  auth-db:
+    image: postgres:18
+    container_name: auth-db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=auth_db
+    volumes:
+      - auth-data:/var/lib/postgresql
+    ports:
+      - "5433:5432"
+    networks:
+      - proxy-network
+   
+  user-db:
+    image: postgres:18
+    container_name: user-db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=users_db
+    volumes:
+      - user-data:/var/lib/postgresql
+    ports:
+      - "5434:5432"
+    networks:
+      - proxy-network
+
+  device-db:
+    image: postgres:18
+    container_name: device-db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=devices_db
+    volumes:
+      - device-data:/var/lib/postgresql
+    ports:
+      - "5435:5432"
+    networks:
+      - proxy-network
+
+  monitor-db:
+    image: postgres:18
+    container_name: monitor-db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=monitor_db
+    volumes:
+      - monitor-data:/var/lib/postgresql
+    ports:
+      - "5436:5432"
+    networks:
+      - proxy-network
+      
+  cs-db:
+    image: postgres:18
+    container_name: cs-db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=cs_db
+    volumes:
+      - cs-data:/var/lib/postgresql
+    ports:
+      - "5437:5432"
+    networks:
+      - proxy-network
+
+# ----------------------- NETWORKS -----------------------
+
+networks:
+  proxy-network:
+    driver: bridge
+  mq-network:
+    driver: bridge
+
+# ------------------------- VOLUMES ----------------------
+
+volumes:
+  auth-data:
+  user-data:
+  device-data:
+  monitor-data:
+  cs-data:
+  rabbitmq-lib:
+    driver: local
+  rabbitmq-log:
+    driver: local
+
+configs:
+  rabbitmq-plugins:
+    content: "[rabbitmq_management]." 
