@@ -4,14 +4,24 @@ export interface LiveUpdate {
     totalConsumption: number;
 }
 
+export interface MonitorMessage {
+    eventType: "MONITOR_ALERT";
+    deviceId: number;
+    value: number;
+    maxAllowed: number;
+    timestamp: string;
+}
+
 let ws: WebSocket | null = null;
 
 export function connectToLive(
+    userId: number,
     deviceId: number,
-    onMessage: (msg: LiveUpdate) => void
+    onUpdate: (msg: LiveUpdate) => void,
+    onAlert: (msg: MonitorMessage) => void
 ): Promise<void> {
     return new Promise((resolve, reject) => {
-        ws = new WebSocket("ws://localhost/api/ws/monitor");
+        ws = new WebSocket(`ws://localhost/api/ws/monitor?userId=${userId}`);
 
         ws.onopen = () => {
             console.log(`[WS] Connected. Subscribing to device ${deviceId}…`);
@@ -27,26 +37,19 @@ export function connectToLive(
         };
 
         ws.onmessage = (event) => {
-            try {
-                if (!event.data) return;
+            const raw = JSON.parse(event.data);
 
-                const raw = JSON.parse(event.data);
+            if (raw.eventType === "MONITOR_ALERT") {
+                onAlert(raw);
+                return;
+            }
 
-                const msg: LiveUpdate = {
+            if (raw.eventType === "MONITOR_UPDATE") {
+                onUpdate({
                     deviceId: raw.deviceId,
                     hour: raw.hour,
                     totalConsumption: raw.totalConsumption,
-                };
-
-                if (!msg.deviceId || !msg.hour) {
-                    console.warn("[WS] Ignoring invalid payload:", raw);
-                    return;
-                }
-
-                onMessage(msg);
-
-            } catch (e) {
-                console.error("[WS] Failed to parse message:", e, event.data);
+                });
             }
         };
 

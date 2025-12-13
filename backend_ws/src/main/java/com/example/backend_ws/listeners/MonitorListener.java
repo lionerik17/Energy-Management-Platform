@@ -13,11 +13,11 @@ public class MonitorListener {
 
     private final MonitorWebSocketHandler wsHandler;
 
-    @RabbitListener(queues = RabbitMQConfig.MONITOR_QUEUE)
-    public void receiveMonitorEvent(SyncEvent event) {
-        Integer deviceId = event.deviceId();
-        if (deviceId != null) {
-            wsHandler.broadcastUpdate(event);
+    @RabbitListener(queues = RabbitMQConfig.SYNC_QUEUE)
+    public void receiveMonitorUpdate(SyncEvent event) {
+        switch (event.type()) {
+            case RabbitMQConfig.MONITOR_UPDATE -> wsHandler.broadcastUpdate(event);
+            case RabbitMQConfig.MONITOR_ALERT -> wsHandler.broadcastAlert(event);
         }
     }
 }

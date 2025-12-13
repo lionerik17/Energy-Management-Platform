@@ -13,11 +13,16 @@ import java.util.concurrent.ConcurrentHashMap;
 public class MonitorWebSocketHandler extends TextWebSocketHandler {
 
     private final Map<String, Set<WebSocketSession>> subscribers = new ConcurrentHashMap<>();
+    private final Map<Integer, WebSocketSession> userSessions = new ConcurrentHashMap<>();
     private final ObjectMapper mapper = new ObjectMapper();
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
         log("Client connected");
+        Integer userId = extractUserId(session);
+        if (userId != null) {
+            userSessions.put(userId, session);
+        }
     }
 
     @Override
@@ -36,6 +41,7 @@ public class MonitorWebSocketHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
         subscribers.values().forEach(set -> set.remove(session));
+        userSessions.values().remove(session);
         log("Client disconnected");
     }
 
@@ -46,7 +52,9 @@ public class MonitorWebSocketHandler extends TextWebSocketHandler {
         if (subs == null || subs.isEmpty()) return;
 
         try {
-            Object payload = event.data();
+            Map<String, Object> payload = event.data();
+            payload.put("eventType", "MONITOR_UPDATE");
+            payload.put("deviceId", event.deviceId());
 
             String json = mapper.writeValueAsString(payload);
 
@@ -58,6 +66,37 @@ public class MonitorWebSocketHandler extends TextWebSocketHandler {
         } catch (Exception e) {
             log("Error sending update: " + e);
         }
+    }
+
+    public void broadcastAlert(SyncEvent event) {
+
+        Integer userId = event.userId();
+        if (userId == null) return;
+
+        WebSocketSession session = userSessions.get(userId);
+        if (session == null || !session.isOpen()) return;
+
+        try {
+            Map<String, Object> payload = event.data();
+            payload.put("eventType", "MONITOR_ALERT");
+            payload.put("deviceId", event.deviceId());
+
+            session.sendMessage(
+                    new TextMessage(mapper.writeValueAsString(payload))
+            );
+        } catch (Exception ignored) {}
+    }
+
+    private Integer extractUserId(WebSocketSession session) {
+        String query = session.getUri().getQuery();
+        if (query == null) return null;
+
+        for (String p : query.split("&")) {
+            if (p.startsWith("userId=")) {
+                return Integer.valueOf(p.split("=")[1]);
+            }
+        }
+        return null;
     }
 
     private void log(String msg) {

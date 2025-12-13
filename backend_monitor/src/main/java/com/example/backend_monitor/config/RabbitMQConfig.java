@@ -17,12 +17,16 @@ public class RabbitMQConfig {
     public static final String DEVICE_CREATED = "DEVICE_CREATED";
     public static final String DEVICE_UPDATED = "DEVICE_UPDATED";
     public static final String DEVICE_DELETED = "DEVICE_DELETED";
+    public static final String DEVICE_ATTACH = "DEVICE_ATTACH";
+    public static final String DEVICE_UNATTACH = "DEVICE_UNATTACH";
+    public static final String DEVICE_UNATTACH_ALL = "DEVICE_UNATTACH_ALL";
 
     public static final String DATA_EXCHANGE = "device.data.exchange";
     public static final String DATA_QUEUE = "device.data.queue";
     public static final String DATA_ROUTING_KEY = "device.data.key";
 
     public static final String MONITOR_UPDATE = "MONITOR_UPDATE";
+    public static final String MONITOR_ALERT = "MONITOR_ALERT";
     public static final String MONITOR_QUEUE = "monitor.update.queue";
 
     @Bean
@@ -71,6 +75,27 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(syncQueue())
                 .to(syncExchange())
                 .with(DEVICE_DELETED);
+    }
+
+    @Bean
+    public Binding bindDeviceAttached() {
+        return BindingBuilder.bind(syncQueue())
+                .to(syncExchange())
+                .with(DEVICE_ATTACH);
+    }
+
+    @Bean
+    public Binding bindDeviceUnattached() {
+        return BindingBuilder.bind(syncQueue())
+                .to(syncExchange())
+                .with(DEVICE_UNATTACH);
+    }
+
+    @Bean
+    public Binding bindDeviceUnattachedAll() {
+        return BindingBuilder.bind(syncQueue())
+                .to(syncExchange())
+                .with(DEVICE_UNATTACH_ALL);
     }
 
     @Bean

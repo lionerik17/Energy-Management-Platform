@@ -11,7 +11,7 @@ import { type Device, getUserDevices } from "../api/deviceApi";
 import {
     connectToLive,
     disconnectLive,
-    type LiveUpdate
+    type LiveUpdate, type MonitorMessage
 } from "../api/monitoringWebSocket";
 
 import Grid from "@mui/material/Grid";
@@ -27,6 +27,9 @@ import {
     TextField
 } from "@mui/material";
 
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
+
 import {
     LineChart,
     Line,
@@ -39,6 +42,7 @@ import {
 
 import styles from "../ClientPage.module.css";
 import {CustomTooltip} from "./CustomTooltip.tsx";
+import {getUserDetails, type UserDetails} from "../api/userApi.ts";
 
 const MonitoringView = () => {
     const [devices, setDevices] = useState<Device[]>([]);
@@ -53,6 +57,10 @@ const MonitoringView = () => {
 
     const [dayHistory, setDayHistory] = useState<HourlyHistory[]>([]);
     const [liveData, setLiveData] = useState<LiveUpdate[]>([]);
+    const [alertMessage, setAlertMessage] = useState<MonitorMessage | null>(null);
+    const [alertOpen, setAlertOpen] = useState(false);
+
+    const [user, setUser] = useState<UserDetails | null>(null);
 
     const [simRunning, setSimRunning] = useState(false);
     const wsConnectedRef = useRef(false);
@@ -60,6 +68,12 @@ const MonitoringView = () => {
     useEffect(() => {
         getUserDevices().then((devs) => {
             if (devs) setDevices(devs);
+        });
+    }, []);
+
+    useEffect(() => {
+        getUserDetails().then((data) => {
+            setUser(data);
         });
     }, []);
 
@@ -82,28 +96,35 @@ const MonitoringView = () => {
     const connectToDevice = async (deviceId: number) => {
         if (wsConnectedRef.current) disconnectLive();
 
-        await connectToLive(deviceId, (msg: LiveUpdate) => {
-            setLiveData(prev => [...prev, msg].slice(-100));
+        await connectToLive(
+            user!.id,
+            deviceId,
 
-            const msgDay = msg.hour.split("T")[0];
+            (msg: LiveUpdate) => {
+                setLiveData(prev => [...prev, msg].slice(-100));
 
-            if (msgDay === selectedDayRef.current) {
-                setDayHistory(prev => {
-                    const hour = msg.hour;
-                    const existingIndex = prev.findIndex(h => h.hour === hour);
+                const msgDay = msg.hour.split("T")[0];
+                if (msgDay === selectedDayRef.current) {
+                    setDayHistory(prev => {
+                        const idx = prev.findIndex(h => h.hour === msg.hour);
+                        if (idx !== -1) {
+                            const copy = [...prev];
+                            copy[idx] = msg;
+                            return copy;
+                        }
+                        return [...prev, msg].sort((a, b) =>
+                            a.hour.localeCompare(b.hour)
+                        );
+                    });
+                }
+            },
 
-                    if (existingIndex !== -1) {
-                        const updated = [...prev];
-                        updated[existingIndex] = msg;
-                        return updated;
-                    }
-
-                    return [...prev, msg].sort((a, b) =>
-                        a.hour.localeCompare(b.hour)
-                    );
-                });
+            (alertMsg: MonitorMessage) => {
+                console.log("ALERT PAYLOAD:", alertMsg);
+                setAlertMessage(alertMsg);
+                setAlertOpen(true);
             }
-        });
+        );
 
         wsConnectedRef.current = true;
     };
@@ -135,6 +156,22 @@ const MonitoringView = () => {
             <Typography variant="h4" sx={{ fontWeight: 700, mb: 3 }}>
                 Device Monitoring
             </Typography>
+
+            <Snackbar
+                open={alertOpen}
+                onClose={() => setAlertOpen(false)}
+                anchorOrigin={{ vertical: "top", horizontal: "center" }}
+            >
+                <Alert
+                    severity="error"
+                    variant="filled"
+                    onClose={() => setAlertOpen(false)}
+                    sx={{ width: "100%" }}
+                >
+                    ⚠️ Device #{alertMessage?.deviceId} exceeded limit
+                    ({alertMessage?.value} / {alertMessage?.maxAllowed})
+                </Alert>
+            </Snackbar>
 
             <Grid container spacing={4}>
 

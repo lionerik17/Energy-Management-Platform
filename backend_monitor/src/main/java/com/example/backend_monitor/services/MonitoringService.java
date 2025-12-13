@@ -3,8 +3,10 @@ package com.example.backend_monitor.services;
 import com.example.backend_monitor.dtos.DeviceMeasurementEvent;
 import com.example.backend_monitor.dtos.HourlyConsumptionResponse;
 import com.example.backend_monitor.entities.DeviceProjection;
+import com.example.backend_monitor.entities.DevicesUsersProjection;
 import com.example.backend_monitor.entities.HourlyConsumption;
 import com.example.backend_monitor.repositories.DeviceProjectionRepository;
+import com.example.backend_monitor.repositories.DevicesUsersProjectionRepository;
 import com.example.backend_monitor.repositories.HourlyConsumptionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,6 +23,7 @@ public class MonitoringService {
     private final HourlyConsumptionRepository repo;
     private final MonitoringPublisher publisher;
     private final DeviceProjectionRepository deviceProjectionRepository;
+    private final DevicesUsersProjectionRepository devicesUsersProjectionRepository;
 
     @Transactional
     public void process(DeviceMeasurementEvent e) {
@@ -30,6 +33,14 @@ public class MonitoringService {
 
         if(device == null) {
             System.out.println("[Monitor] Invalid deviceId: " + e.deviceId());
+            return;
+        }
+
+        DevicesUsersProjection du =
+                devicesUsersProjectionRepository.findByDeviceId(e.deviceId());
+
+        if (du == null) {
+            System.out.println("[Monitor] No user assigned to deviceId: " + e.deviceId());
             return;
         }
 
@@ -48,6 +59,17 @@ public class MonitoringService {
 
         publisher.publishUpdate(hc);
         repo.save(hc);
+
+        if(e.alert() != null) {
+            if (e.alert().type().equals("OVERCONSUMPTION")) {
+                publisher.publishAlert(
+                        du.getUserId(),
+                        e.deviceId(),
+                        e.value(),
+                        e.alert().maxAllowed(),
+                        timestamp.toString());
+            }
+        }
     }
 
     public List<HourlyConsumptionResponse> getDeviceConsumption(Integer deviceId) {

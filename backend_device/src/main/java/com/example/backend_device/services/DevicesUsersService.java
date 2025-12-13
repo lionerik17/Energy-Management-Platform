@@ -25,6 +25,7 @@ public class DevicesUsersService {
     private final DeviceRepository deviceRepository;
     private final UserProjectionRepository userProjectionRepository;
     private final DevicesUsersRepository devicesUsersRepo;
+    private final SyncPublisher publisher;
 
     @Transactional
     public void assign(Integer userId, Integer deviceId) {
@@ -34,16 +35,19 @@ public class DevicesUsersService {
                 .build();
 
         devicesUsersRepo.save(du);
+        publisher.deviceAttached(du);
     }
 
     @Transactional
     public void unassign(Integer userId, Integer deviceId) {
         devicesUsersRepo.deleteByIdUserAndIdDevice(userId, deviceId);
+        publisher.deviceUnattached(userId, deviceId);
     }
 
     @Transactional
     public void unassignAll(Integer userId) {
         devicesUsersRepo.deleteByIdUser(userId);
+        publisher.deviceUnattachedAll(userId);
     }
 
     public List<DeviceResponse> getUserDevices(Integer userId) {

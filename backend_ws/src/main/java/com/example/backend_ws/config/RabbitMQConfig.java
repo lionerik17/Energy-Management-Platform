@@ -11,7 +11,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConfig {
 
-    public static final String EXCHANGE = "sync.exchange";
+    public static final String SYNC_EXCHANGE = "sync.exchange";
+    public static final String SYNC_QUEUE = "sync.ws.queue";
 
     public static final String CHAT_TO_ADMIN = "CHAT_TO_ADMIN";
     public static final String CHAT_TO_USER = "CHAT_TO_USER";
@@ -22,11 +23,12 @@ public class RabbitMQConfig {
     public static final String QUEUE_BOT_TO_USER = "bot.to.user.queue";
 
     public static final String MONITOR_UPDATE = "MONITOR_UPDATE";
+    public static final String MONITOR_ALERT = "MONITOR_ALERT";
     public static final String MONITOR_QUEUE = "monitor.update.queue";
 
     @Bean
     public DirectExchange syncExchange() {
-        return new DirectExchange(EXCHANGE);
+        return new DirectExchange(SYNC_EXCHANGE);
     }
 
     @Bean
@@ -42,6 +44,11 @@ public class RabbitMQConfig {
     @Bean
     public Queue queueBotToUser() {
         return new Queue(QUEUE_BOT_TO_USER, true);
+    }
+
+    @Bean
+    public Queue syncQueue() {
+        return new Queue(SYNC_QUEUE, true);
     }
 
     @Bean
@@ -72,9 +79,16 @@ public class RabbitMQConfig {
 
     @Bean
     public Binding bindMonitorUpdate() {
-        return BindingBuilder.bind(monitorQueue())
+        return BindingBuilder.bind(syncQueue())
                 .to(syncExchange())
                 .with(MONITOR_UPDATE);
+    }
+
+    @Bean
+    public Binding monitorAlertBinding() {
+        return BindingBuilder.bind(syncQueue())
+                .to(syncExchange())
+                .with(RabbitMQConfig.MONITOR_ALERT);
     }
 
     @Bean

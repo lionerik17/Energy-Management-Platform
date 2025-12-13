@@ -2,7 +2,9 @@ package com.example.backend_monitor.services;
 
 import com.example.backend_monitor.dtos.SyncEvent;
 import com.example.backend_monitor.entities.DeviceProjection;
+import com.example.backend_monitor.entities.DevicesUsersProjection;
 import com.example.backend_monitor.repositories.DeviceProjectionRepository;
+import com.example.backend_monitor.repositories.DevicesUsersProjectionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +15,7 @@ public class MonitorSyncService {
 
     private final HistoryCleanupService historyCleanupService;
     private final DeviceProjectionRepository deviceProjectionRepository;
+    private final DevicesUsersProjectionRepository devicesUsersProjectionRepository;
 
     @Transactional
     public void handleDeviceCreated(SyncEvent e) {
@@ -65,6 +68,39 @@ public class MonitorSyncService {
 
         deviceProjectionRepository.delete(device);
         log("Device removed from DeviceProjection: " + deviceId);
+    }
+
+    @Transactional
+    public void handleDeviceAttached(SyncEvent e) {
+        if (e.userId() == null || e.deviceId() == null) return;
+
+        devicesUsersProjectionRepository.save(
+                DevicesUsersProjection.builder()
+                        .userId(e.userId())
+                        .deviceId(e.deviceId())
+                        .build()
+        );
+
+        log("Device " + e.deviceId() + " attached to user " + e.userId());
+    }
+
+    @Transactional
+    public void handleDeviceUnattached(SyncEvent e) {
+        if (e.userId() == null || e.deviceId() == null) return;
+
+        devicesUsersProjectionRepository
+                .deleteByUserIdAndDeviceId(e.userId(), e.deviceId());
+
+        log("Device " + e.deviceId() + " unattached from user " + e.userId());
+    }
+
+    @Transactional
+    public void handleDeviceUnattachedAll(SyncEvent e) {
+        if (e.userId() == null) return;
+
+        devicesUsersProjectionRepository.deleteByUserId(e.userId());
+
+        log("All devices unattached from user " + e.userId());
     }
 
     private void log(String msg) {

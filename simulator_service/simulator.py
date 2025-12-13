@@ -34,15 +34,19 @@ def generate_consumption(hour: int, max_value: float) -> float:
     small_fluct = random.uniform(-0.1, 0.1) * base
 
     if random.random() < 0.9:
-        random_factor = random.uniform(0.1, 1.0)
+        random_factor = random.uniform(0.5, 1.0)
         base = base * random_factor
 
-    if random.random() < 0.75:
+    if random.random() < 0.25:
         value = base + small_fluct
     else:
         value = max_value + small_fluct
 
     return round(max(value, 0.0), 2)
+
+
+def is_overconsumption(value: float, max_value: float) -> bool:
+    return value >= max_value
 
 
 def run_simulator(device_id: int, max_value: float):
@@ -65,10 +69,18 @@ def run_simulator(device_id: int, max_value: float):
         hour = simulated_time.hour
         value = generate_consumption(hour, max_value)
 
+        alert = None
+        if is_overconsumption(value, max_value):
+            alert = {
+                "type": "OVERCONSUMPTION",
+                "maxAllowed": max_value
+            }
+
         payload = {
             "deviceId": device_id,
             "timestamp": simulated_time.isoformat(),
-            "value": value
+            "value": value,
+            "alert": alert
         }
 
         channel.basic_publish(

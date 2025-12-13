@@ -25,6 +25,10 @@ public class SyncEventListener {
             case RabbitMQConfig.DEVICE_UPDATED -> monitorSyncService.handleDeviceUpdated(event);
             case RabbitMQConfig.DEVICE_DELETED -> monitorSyncService.handleDeviceDeleted(event);
 
+            case RabbitMQConfig.DEVICE_ATTACH -> monitorSyncService.handleDeviceAttached(event);
+            case RabbitMQConfig.DEVICE_UNATTACH -> monitorSyncService.handleDeviceUnattached(event);
+            case RabbitMQConfig.DEVICE_UNATTACH_ALL -> monitorSyncService.handleDeviceUnattachedAll(event);
+
             default -> System.out.println("[MonitorSync] Unknown event type: " + event.type());
         }
     }

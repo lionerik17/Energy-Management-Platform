@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,5 +43,28 @@ public class MonitoringPublisher {
     public void publishUpdate(HourlyConsumption hc) {
         Map<String, Object> data = baseHourlyConsumptionData(hc);
         send("MONITOR_UPDATE", null, hc.getDeviceId(), data);
+    }
+
+    public void publishAlert(
+            Integer userId,
+            Integer deviceId,
+            Double value,
+            Double maxAllowed,
+            String timestamp
+    ) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("userId", userId);
+        data.put("deviceId", deviceId);
+        data.put("value", value);
+        data.put("maxAllowed", maxAllowed);
+        data.put("timestamp", timestamp);
+        data.put("type", "OVERCONSUMPTION");
+
+        send(
+                RabbitMQConfig.MONITOR_ALERT,
+                userId,
+                deviceId,
+                data
+        );
     }
 }
