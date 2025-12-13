@@ -22,6 +22,9 @@ public class RabbitMQConfig {
     public static final String DATA_QUEUE = "device.data.queue";
     public static final String DATA_ROUTING_KEY = "device.data.key";
 
+    public static final String MONITOR_UPDATE = "MONITOR_UPDATE";
+    public static final String MONITOR_QUEUE = "monitor.update.queue";
+
     @Bean
     public DirectExchange dataExchange() {
         return new DirectExchange(DATA_EXCHANGE);
@@ -68,6 +71,18 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(syncQueue())
                 .to(syncExchange())
                 .with(DEVICE_DELETED);
+    }
+
+    @Bean
+    public Queue monitorUpdateQueue() {
+        return new Queue(MONITOR_QUEUE, true);
+    }
+
+    @Bean
+    public Binding monitorUpdateBinding() {
+        return BindingBuilder.bind(monitorUpdateQueue())
+                .to(syncExchange())
+                .with(MONITOR_UPDATE);
     }
 
     @Bean

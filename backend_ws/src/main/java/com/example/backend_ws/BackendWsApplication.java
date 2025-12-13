@@ -1,5 +1,6 @@
 package com.example.backend_ws;
 
+import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
@@ -9,6 +10,7 @@ import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfigurat
         DataSourceAutoConfiguration.class,
         HibernateJpaAutoConfiguration.class
 })
+@EnableRabbit
 public class BackendWsApplication {
 
     public static void main(String[] args) {

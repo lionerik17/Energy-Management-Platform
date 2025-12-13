@@ -107,14 +107,6 @@ http:
         - strip-api-prefix
         
     # --------------------- MONITORING --------------------
-    monitoring-ws:
-      rule: "PathPrefix(`/api/ws/monitor`)"
-      service: monitor-service
-      entryPoints:
-        - web
-      middlewares:
-        - strip-api-prefix
-        - websocket-upgrade
     
     monitoring-router:
       rule: "PathPrefix(`/api/monitoring`) && !PathPrefix(`/api/ws/monitor`)"
@@ -135,14 +127,6 @@ http:
         - strip-api-prefix
         
   # ------------------- CUSTOMER SUPPORT ------------------
-    chat-ws:
-      rule: "PathPrefix(`/api/ws/chat`)"
-      service: ws-service
-      entryPoints:
-        - web
-      middlewares:
-        - strip-api-prefix
-        - websocket-upgrade
         
     chat-user-router:
       rule: "PathPrefix(`/api/chat/send/user`) || PathPrefix(`/api/chat/send/admin`) || PathPrefix(`/api/chat/send/bot`)"
@@ -152,6 +136,26 @@ http:
       middlewares:
         - strip-api-prefix
         - verify-jwt
+        
+  # ---------------------- WEB SOCKETS --------------------
+  
+    chat-ws:
+      rule: "PathPrefix(`/api/ws/chat`)"
+      service: ws-service
+      entryPoints:
+        - web
+      middlewares:
+        - strip-api-prefix
+        - websocket-upgrade
+        
+    monitoring-ws:
+      rule: "PathPrefix(`/api/ws/monitor`)"
+      service: ws-service
+      entryPoints:
+        - web
+      middlewares:
+        - strip-api-prefix
+        - websocket-upgrade
 
   # ---------------------- MIDDLEWARES --------------------
   middlewares:

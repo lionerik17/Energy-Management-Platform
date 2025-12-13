@@ -46,7 +46,7 @@ public class MonitoringService {
 
         hc.setTotalConsumption(e.value());
 
-        publisher.publishLiveUpdate(hc);
+        publisher.publishUpdate(hc);
         repo.save(hc);
     }
 

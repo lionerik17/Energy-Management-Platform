@@ -10,10 +10,14 @@ import org.springframework.web.socket.config.annotation.*;
 public class WebSocketConfig implements WebSocketConfigurer {
 
     private final ChatWebSocketHandler handler;
+    private final MonitorWebSocketHandler monitorHandler;
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(handler, "/ws/chat")
+                .setAllowedOrigins("*");
+
+        registry.addHandler(monitorHandler, "/ws/monitor")
                 .setAllowedOrigins("*");
     }
 }

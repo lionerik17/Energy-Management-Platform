@@ -21,8 +21,11 @@ public class RabbitMQConfig {
     public static final String QUEUE_CHAT_TO_USER = "chat.to.user.queue";
     public static final String QUEUE_BOT_TO_USER = "bot.to.user.queue";
 
+    public static final String MONITOR_UPDATE = "MONITOR_UPDATE";
+    public static final String MONITOR_QUEUE = "monitor.update.queue";
+
     @Bean
-    public DirectExchange chatExchange() {
+    public DirectExchange syncExchange() {
         return new DirectExchange(EXCHANGE);
     }
 
@@ -42,24 +45,36 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    public Queue monitorQueue() {
+        return new Queue(MONITOR_QUEUE, true);
+    }
+
+    @Bean
     public Binding bindChatToAdmin() {
         return BindingBuilder.bind(queueChatToAdmin())
-                .to(chatExchange())
+                .to(syncExchange())
                 .with(CHAT_TO_ADMIN);
     }
 
     @Bean
     public Binding bindChatToUser() {
         return BindingBuilder.bind(queueChatToUser())
-                .to(chatExchange())
+                .to(syncExchange())
                 .with(CHAT_TO_USER);
     }
 
     @Bean
     public Binding bindBotToUser() {
         return BindingBuilder.bind(queueBotToUser())
-                .to(chatExchange())
+                .to(syncExchange())
                 .with(BOT_TO_USER);
+    }
+
+    @Bean
+    public Binding bindMonitorUpdate() {
+        return BindingBuilder.bind(monitorQueue())
+                .to(syncExchange())
+                .with(MONITOR_UPDATE);
     }
 
     @Bean

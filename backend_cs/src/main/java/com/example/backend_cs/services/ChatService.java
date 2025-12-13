@@ -56,13 +56,18 @@ public class ChatService {
         repo.save(chatMessage);
 
         String botReply = rules.match(message);
-        if (!botReply.equals(RuleEngineService.redirectToAI)) {
+        if (!botReply.equals(RuleEngineService.REDIRECT_TO_AI)) {
             publisher.botReplyToUser(sender, botReply);
             return chatMessage;
         }
 
         // TODO: Call Gemini API
+        log("Could not match any rule. Calling Gemini...");
         return null;
+    }
+
+    private void log(String msg) {
+        System.out.println("[CS] " + msg);
     }
 }
 
