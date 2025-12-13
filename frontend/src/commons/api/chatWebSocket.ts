@@ -24,13 +24,6 @@ export function useChat(receiver: string) {
             ws.onmessage = (event: MessageEvent) => {
                 const msg: ChatMessage = JSON.parse(event.data);
 
-                if (msg.sender === u.username) return;
-
-                const isBotToUser =
-                    msg.sender === "bot" && msg.receiver === u.username;
-
-                if (!isBotToUser) return;
-
                 setMessages(prev =>
                     [...prev, msg]
                 );

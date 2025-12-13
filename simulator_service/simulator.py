@@ -37,7 +37,7 @@ def generate_consumption(hour: int, max_value: float) -> float:
         random_factor = random.uniform(0.5, 1.0)
         base = base * random_factor
 
-    if random.random() < 0.25:
+    if random.random() < 0.5:
         value = base + small_fluct
     else:
         value = max_value + small_fluct

@@ -3,8 +3,10 @@ package com.example.backend_monitor.services;
 import com.example.backend_monitor.dtos.SyncEvent;
 import com.example.backend_monitor.entities.DeviceProjection;
 import com.example.backend_monitor.entities.DevicesUsersProjection;
+import com.example.backend_monitor.entities.UserProjection;
 import com.example.backend_monitor.repositories.DeviceProjectionRepository;
 import com.example.backend_monitor.repositories.DevicesUsersProjectionRepository;
+import com.example.backend_monitor.repositories.UserProjectionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +17,7 @@ public class MonitorSyncService {
 
     private final HistoryCleanupService historyCleanupService;
     private final DeviceProjectionRepository deviceProjectionRepository;
+    private final UserProjectionRepository userProjectionRepository;
     private final DevicesUsersProjectionRepository devicesUsersProjectionRepository;
 
     @Transactional
@@ -101,6 +104,27 @@ public class MonitorSyncService {
         devicesUsersProjectionRepository.deleteByUserId(e.userId());
 
         log("All devices unattached from user " + e.userId());
+    }
+
+    @Transactional
+    public void handleUserCreated(SyncEvent e) {
+        if (e.userId() == null) return;
+
+        UserProjection u = new UserProjection(e.userId());
+        userProjectionRepository.save(u);
+        log("User " + e.userId() + " created");
+    }
+
+    @Transactional
+    public void handleUserDeleted(SyncEvent e) {
+        if (e.userId() == null) return;
+
+        UserProjection u = userProjectionRepository.findById(e.userId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        devicesUsersProjectionRepository.deleteByUserId(u.getUserId());
+        userProjectionRepository.delete(u);
+        log("User " + e.userId() + " deleted");
     }
 
     private void log(String msg) {

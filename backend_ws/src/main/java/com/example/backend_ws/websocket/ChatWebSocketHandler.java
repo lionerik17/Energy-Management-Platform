@@ -29,17 +29,31 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     }
 
     public void sendToUser(String receiverId, Object payload) {
+        log("Trying to send to: " + receiverId);
+        log("Active WS users: " + sessions.keySet());
+
+        WebSocketSession session = sessions.get(receiverId);
+
+        if (session == null) {
+            log("No WS session for user: " + receiverId);
+            return;
+        }
+
+        if (!session.isOpen()) {
+            log("WS session CLOSED for user: " + receiverId);
+            return;
+        }
+
         try {
-            WebSocketSession session = sessions.get(receiverId);
-            if (session != null && session.isOpen()) {
-                session.sendMessage(
-                        new TextMessage(mapper.writeValueAsString(payload))
-                );
-            }
+            session.sendMessage(
+                    new TextMessage(mapper.writeValueAsString(payload))
+            );
+            log("WS message sent to " + receiverId);
         } catch (Exception e) {
-            log("Error sending WebSocket message: " + e);
+            log("Error sending WS message: " + e);
         }
     }
+
 
     private String extractUsername(WebSocketSession session) {
         String query = session.getUri().getQuery();

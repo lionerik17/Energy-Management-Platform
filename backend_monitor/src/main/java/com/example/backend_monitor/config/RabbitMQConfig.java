@@ -29,6 +29,9 @@ public class RabbitMQConfig {
     public static final String MONITOR_ALERT = "MONITOR_ALERT";
     public static final String MONITOR_QUEUE = "monitor.update.queue";
 
+    public static final String USER_CREATED = "USER_CREATED";
+    public static final String USER_DELETED = "USER_DELETED";
+
     @Bean
     public DirectExchange dataExchange() {
         return new DirectExchange(DATA_EXCHANGE);
@@ -108,6 +111,20 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(monitorUpdateQueue())
                 .to(syncExchange())
                 .with(MONITOR_UPDATE);
+    }
+
+    @Bean
+    public Binding bindUserCreated() {
+        return BindingBuilder.bind(syncQueue())
+                .to(syncExchange())
+                .with(USER_CREATED);
+    }
+
+    @Bean
+    public Binding bindUserDeleted() {
+        return BindingBuilder.bind(syncQueue())
+                .to(syncExchange())
+                .with(USER_DELETED);
     }
 
     @Bean

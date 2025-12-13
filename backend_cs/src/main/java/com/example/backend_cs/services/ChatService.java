@@ -25,6 +25,7 @@ public class ChatService {
                 .build();
 
         publisher.userMessageToAdmin(sender, receiver, message);
+        log(sender + " " + message);
 
         return chatMessage;
     }
@@ -38,6 +39,7 @@ public class ChatService {
                 .build();
 
         publisher.adminReplyToUser(sender, receiver, message);
+        log(sender + " " + message);
 
         return chatMessage;
     }
