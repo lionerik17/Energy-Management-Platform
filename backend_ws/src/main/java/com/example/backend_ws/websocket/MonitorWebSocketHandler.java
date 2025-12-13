@@ -12,7 +12,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class MonitorWebSocketHandler extends TextWebSocketHandler {
 
-    // deviceId -> set of sessions
     private final Map<String, Set<WebSocketSession>> subscribers = new ConcurrentHashMap<>();
     private final ObjectMapper mapper = new ObjectMapper();
 

@@ -51,11 +51,14 @@ const ClientSidebar = () => {
                 >
                     Chat
                 </button>
+                <button className={styles.navButton} onClick={() => handlePageChange("/client/chat/bot")}>
+                    Bot Chat
+                </button>
             </nav>
 
             <div className={styles.logoutSection}>
                 <button className={styles.logoutButton} onClick={handleLogout}>
-                    Logout
+                Logout
                 </button>
             </div>
         </aside>

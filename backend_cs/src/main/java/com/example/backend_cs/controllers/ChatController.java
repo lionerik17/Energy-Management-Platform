@@ -36,9 +36,8 @@ public class ChatController {
     @PostMapping("/send/bot")
     public ChatMessage replyBot(
             @RequestParam String sender,
-            @RequestParam String receiver,
             @RequestParam String message
     ) {
-        return chatService.handleBotReply(sender, receiver, message);
+        return chatService.handleBotReply(sender, message);
     }
 }

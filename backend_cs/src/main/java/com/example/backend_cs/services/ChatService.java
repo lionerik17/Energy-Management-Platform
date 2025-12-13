@@ -14,6 +14,7 @@ public class ChatService {
     private final ChatMessageRepository repo;
     private final RuleEngineService rules;
     private final ChatPublisher publisher;
+    private final GeminiService geminiService;
 
     public ChatMessage handleUserMessage(String sender, String receiver, String message) {
         ChatMessage chatMessage = ChatMessage.builder()
@@ -22,8 +23,6 @@ public class ChatService {
                 .message(message)
                 .timestamp(LocalDateTime.now())
                 .build();
-
-        repo.save(chatMessage);
 
         publisher.userMessageToAdmin(sender, receiver, message);
 
@@ -38,32 +37,36 @@ public class ChatService {
                 .timestamp(LocalDateTime.now())
                 .build();
 
-        repo.save(chatMessage);
-
         publisher.adminReplyToUser(sender, receiver, message);
 
         return chatMessage;
     }
 
-    public ChatMessage handleBotReply(String sender, String receiver, String message) {
+    public ChatMessage handleBotReply(String receiver, String message) {
+        String botReply = rules.match(message);
+        String finalMsg = "";
+
+        if (!botReply.equals(RuleEngineService.REDIRECT_TO_AI)) {
+            publisher.botReplyToUser(receiver, botReply);
+            finalMsg = botReply;
+        } else {
+            log("Could not match any rule. Calling Gemini...");
+
+            String aiReply = geminiService.askGemini(message);
+            publisher.botReplyToUser(receiver, aiReply);
+            finalMsg = aiReply;
+        }
+
+        log(finalMsg);
+
         ChatMessage chatMessage = ChatMessage.builder()
-                .sender(sender)
+                .sender(ChatMessage.BOT_NAME)
                 .receiver(receiver)
-                .message(message)
+                .message(finalMsg)
                 .timestamp(LocalDateTime.now())
                 .build();
 
-        repo.save(chatMessage);
-
-        String botReply = rules.match(message);
-        if (!botReply.equals(RuleEngineService.REDIRECT_TO_AI)) {
-            publisher.botReplyToUser(sender, botReply);
-            return chatMessage;
-        }
-
-        // TODO: Call Gemini API
-        log("Could not match any rule. Calling Gemini...");
-        return null;
+        return chatMessage;
     }
 
     private void log(String msg) {

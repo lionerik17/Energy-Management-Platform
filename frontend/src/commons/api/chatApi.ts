@@ -1,6 +1,6 @@
 import { HOST } from "../hosts.ts";
 
-export async function sendMessage(sender: string, receiver: string, message: string, senderRole: "USER" | "ADMIN") {
+export async function sendMessage(sender: string, receiver: string, message: string, senderRole: "CLIENT" | "ADMIN") {
     const query = new URLSearchParams({ sender, receiver, message });
     const token = localStorage.getItem("token");
 
@@ -9,12 +9,18 @@ export async function sendMessage(sender: string, receiver: string, message: str
         return;
     }
 
-    const endpoint =
-        senderRole === "ADMIN"
-            ? `${HOST.backend_cs}/send/admin?`
-            : `${HOST.backend_cs}/send/user?`;
+    let url = "";
 
-    return fetch(endpoint + query.toString(), {
+    if (receiver === "bot") {
+        url = `${HOST.backend_cs}/send/bot?`;
+    }
+    else if (senderRole === "ADMIN") {
+        url = `${HOST.backend_cs}/send/admin?`;
+    } else if (senderRole === "CLIENT") {
+        url = `${HOST.backend_cs}/send/user?`;
+    }
+
+    return fetch(url + query.toString(), {
         method: "POST",
         headers: {
             Authorization: `Bearer ${token}`,

@@ -1,16 +1,14 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
-import styles from "./ChatRoomPage.module.css";
-import {useChat} from "../api/chatWebSocket.ts";
+import styles from "../../commons/chat/ChatRoomPage.module.css";
+import { useChat } from "../../commons/api/chatWebSocket.ts";
 
-const ChatRoomPage = () => {
-    const { receiverId } = useParams();
-    const receiver = receiverId!;
-
+const ChatBotPage = () => {
+    const receiver = "bot";
     const { messages, send, classifySender } = useChat(receiver);
+
     const [input, setInput] = useState("");
 
-    const sendMessage = () => {
+    const sendMessageToBot = () => {
         if (!input.trim()) return;
         send(input.trim());
         setInput("");
@@ -19,7 +17,7 @@ const ChatRoomPage = () => {
     return (
         <div className={styles.pageWrapper}>
             <div className={styles.mainContent}>
-                <h1 className={styles.chatTitle}>Chat with {receiver}</h1>
+                <h1 className={styles.chatTitle}>Bot Chat</h1>
 
                 <div className={styles.chatBox}>
                     {messages.map((msg) => (
@@ -40,12 +38,12 @@ const ChatRoomPage = () => {
                 <div className={styles.inputRow}>
                     <input
                         className={styles.chatInput}
-                        placeholder="Type your message..."
+                        placeholder="Ask something..."
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                        onKeyDown={(e) => e.key === "Enter" && sendMessageToBot()}
                     />
-                    <button className={styles.sendButton} onClick={sendMessage}>
+                    <button className={styles.sendButton} onClick={sendMessageToBot}>
                         Send
                     </button>
                 </div>
@@ -54,4 +52,4 @@ const ChatRoomPage = () => {
     );
 };
 
-export default ChatRoomPage;
+export default ChatBotPage;

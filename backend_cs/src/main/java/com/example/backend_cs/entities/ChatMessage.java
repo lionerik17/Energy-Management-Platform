@@ -28,4 +28,6 @@ public class ChatMessage {
 
     @Column
     public LocalDateTime timestamp;
+
+    public static final String BOT_NAME = "bot";
 }

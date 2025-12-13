@@ -107,7 +107,7 @@ services:
     networks:
       - proxy-network
       - mq-network
-      
+
   simulator-service:
     build: ./simulator_service
     container_name: simulator-service
@@ -116,8 +116,7 @@ services:
     networks:
       - proxy-network
       - mq-network
-      
-      
+
   # --------------------- CS SERVICE ---------------------
   
   backend_cs:

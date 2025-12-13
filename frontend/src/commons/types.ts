@@ -25,5 +25,6 @@ export interface ChatMessage {
     receiver: string;
     data: {
         message: string;
+        timestamp: string;
     };
 }

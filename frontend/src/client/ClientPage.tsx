@@ -8,6 +8,7 @@ import ProfileView from "./components/ProfileView.tsx";
 import MonitoringView from "./components/MonitoringView.tsx";
 import SelectAdminPage from "./components/SelectAdminPage.tsx";
 import ChatRoomPage from "../commons/chat/ChatRoomPage.tsx";
+import ChatBotPage from "./components/ChatBotPage.tsx";
 
 const ClientPage = () => {
     const navigate = useNavigate();
@@ -35,6 +36,7 @@ const ClientPage = () => {
                     <Route path="monitor" element={<MonitoringView/>}/>
                     <Route path="chat/select-admin" element={<SelectAdminPage />} />
                     <Route path="chat/room/:receiverId" element={<ChatRoomPage />} />
+                    <Route path="/chat/bot" element={<ChatBotPage />} />
                 </Routes>
             </main>
         </div>

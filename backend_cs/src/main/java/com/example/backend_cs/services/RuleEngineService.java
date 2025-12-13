@@ -18,8 +18,8 @@ public class RuleEngineService {
             return "Hello! How can I help you today?";
         } else if (t.matches(".*\\b(how are you|how's it going)\\b.*")) {
             return "I'm just code, but I'm running perfectly! What can I help you with?";
-        } else if (t.contains("high consumption")) {
-            return "If you're seeing unusually high consumption, please check your device.";
+        } else if (t.contains("high consumption") || t.contains("overconsumption")) {
+            return "If you're seeing unusually high consumption or overconsumption, please check your device.";
         } else if (t.contains("forgot password") || t.contains("reset password")) {
             return "You can reset your password by asking an admin.";
         } else if (t.contains("where") && t.contains("find")) {

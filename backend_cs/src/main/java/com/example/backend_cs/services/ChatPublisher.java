@@ -2,10 +2,12 @@ package com.example.backend_cs.services;
 
 import com.example.backend_cs.config.RabbitMQConfig;
 import com.example.backend_cs.dtos.ChatEvent;
+import com.example.backend_cs.entities.ChatMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 @Service
@@ -34,16 +36,20 @@ public class ChatPublisher {
                 RabbitMQConfig.CHAT_TO_ADMIN,
                 sender,
                 receiver,
-                Map.of("message", message)
+                Map.of("message", message,
+                       "timestamp", LocalDateTime.now().toString()
+                )
         );
     }
 
     public void botReplyToUser(String receiver, String message) {
         sendEvent(
                 RabbitMQConfig.BOT_TO_USER,
-                "bot",
+                ChatMessage.BOT_NAME,
                 receiver,
-                Map.of("message", message)
+                Map.of("message", message,
+                       "timestamp", LocalDateTime.now().toString()
+                )
         );
     }
 
@@ -52,7 +58,9 @@ public class ChatPublisher {
                 RabbitMQConfig.CHAT_TO_USER,
                 sender,
                 receiver,
-                Map.of("message", message)
+                Map.of("message", message,
+                       "timestamp", LocalDateTime.now().toString()
+                )
         );
     }
 }
