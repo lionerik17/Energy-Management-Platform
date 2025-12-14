@@ -14,7 +14,7 @@ public class MonitoringListener {
 
     private final MonitoringService monitoringService;
 
-    @RabbitListener(queues = RabbitMQConfig.DATA_QUEUE)
+    @RabbitListener(queues = "${MONITOR_QUEUE}", containerFactory = "rabbitListenerContainerFactory")
     public void onMeasurement(DeviceMeasurementEvent event) {
         System.out.println("Received measurement: " + event);
         monitoringService.process(event);

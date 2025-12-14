@@ -29,6 +29,17 @@ services:
       - rabbitmq-log:/var/log/rabbitmq
     networks:
       - mq-network
+      
+  load_balancer:
+    build: ./load_balancer
+    container_name: load-balancer
+    env_file:
+      - ./load_balancer/.env
+    environment:
+      - DEVICE_QUEUE=device.data.queue
+      - MONITORING_REPLICAS=3
+    networks:
+      - mq-network
   
   # ------------------- TRAEFIK GATEWAY ------------------
   
@@ -95,13 +106,42 @@ services:
       
   # ------------------- MONITOR SERVICE ------------------
       
-  backend_monitor:
+  backend_monitor1:
     build: ./backend_monitor
-    container_name: backend-monitor
+    container_name: backend-monitor1
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://monitor-db:5432/monitor_db
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
       - SERVER_PORT=8080
+      - MONITOR_QUEUE=${MONITOR_QUEUE_1}
+    env_file:
+      - ./backend_monitor/.env
+    networks:
+      - proxy-network
+      - mq-network
+      
+  backend_monitor2:
+    build: ./backend_monitor
+    container_name: backend-monitor2
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://monitor-db:5432/monitor_db
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SERVER_PORT=8080
+      - MONITOR_QUEUE=${MONITOR_QUEUE_2}
+    env_file:
+      - ./backend_monitor/.env
+    networks:
+      - proxy-network
+      - mq-network
+      
+  backend_monitor3:
+    build: ./backend_monitor
+    container_name: backend-monitor3
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://monitor-db:5432/monitor_db
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SERVER_PORT=8080
+      - MONITOR_QUEUE=${MONITOR_QUEUE_3}
     env_file:
       - ./backend_monitor/.env
     networks:

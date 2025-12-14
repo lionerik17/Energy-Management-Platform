@@ -1,12 +1,15 @@
 package com.example.backend_monitor.config;
 
+import com.example.backend_monitor.dtos.DeviceMeasurementEvent;
 import org.springframework.amqp.core.*;
+import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
-import org.springframework.amqp.support.converter.MessageConverter;
+import org.springframework.amqp.support.converter.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.Map;
 
 @Configuration
 public class RabbitMQConfig {
@@ -21,10 +24,6 @@ public class RabbitMQConfig {
     public static final String DEVICE_UNATTACH = "DEVICE_UNATTACH";
     public static final String DEVICE_UNATTACH_ALL = "DEVICE_UNATTACH_ALL";
 
-    public static final String DATA_EXCHANGE = "device.data.exchange";
-    public static final String DATA_QUEUE = "device.data.queue";
-    public static final String DATA_ROUTING_KEY = "device.data.key";
-
     public static final String MONITOR_UPDATE = "MONITOR_UPDATE";
     public static final String MONITOR_ALERT = "MONITOR_ALERT";
     public static final String MONITOR_QUEUE = "monitor.update.queue";
@@ -32,22 +31,6 @@ public class RabbitMQConfig {
     public static final String USER_CREATED = "USER_CREATED";
     public static final String USER_DELETED = "USER_DELETED";
 
-    @Bean
-    public DirectExchange dataExchange() {
-        return new DirectExchange(DATA_EXCHANGE);
-    }
-
-    @Bean
-    public Queue dataQueue() {
-        return new Queue(DATA_QUEUE, true);
-    }
-
-    @Bean
-    public Binding dataBinding() {
-        return BindingBuilder.bind(dataQueue())
-                .to(dataExchange())
-                .with(DATA_ROUTING_KEY);
-    }
 
     @Bean
     public DirectExchange syncExchange() {
@@ -130,6 +113,36 @@ public class RabbitMQConfig {
     @Bean
     public MessageConverter jsonConverter() {
         return new Jackson2JsonMessageConverter();
+    }
+
+    @Bean
+    public MessageConverter messageConverter() {
+        Jackson2JsonMessageConverter converter = new Jackson2JsonMessageConverter();
+        converter.setClassMapper(classMapper());
+        return converter;
+    }
+
+    @Bean
+    public ClassMapper classMapper() {
+        DefaultClassMapper mapper = new DefaultClassMapper();
+        mapper.setDefaultType(DeviceMeasurementEvent.class);
+        mapper.setIdClassMapping(Map.of());
+        return mapper;
+    }
+
+    @Bean
+    public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(
+            ConnectionFactory connectionFactory,
+            MessageConverter messageConverter
+    ) {
+        SimpleRabbitListenerContainerFactory factory =
+                new SimpleRabbitListenerContainerFactory();
+
+        factory.setConnectionFactory(connectionFactory);
+        factory.setMessageConverter(messageConverter);
+        factory.setAcknowledgeMode(AcknowledgeMode.AUTO);
+
+        return factory;
     }
 
     @Bean

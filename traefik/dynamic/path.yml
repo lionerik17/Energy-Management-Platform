@@ -1,6 +1,7 @@
 http:
   routers:
     # --------------------- FRONTEND ----------------------
+    
     frontend-router:
       rule: "Host(`localhost`)"
       service: frontend-service
@@ -32,6 +33,7 @@ http:
       service: cs-service
 
     # ---------------------- AUTH -------------------------
+    
     auth-client-router:
       rule: "PathPrefix(`/api/auth`)"
       service: auth-service
@@ -50,6 +52,7 @@ http:
         - strip-api-prefix
 
     # ---------------------- USERS ------------------------
+    
     users-client-router:
       rule: "PathPrefix(`/api/users/details`) || PathPrefix(`/api/users/admins`)"
       service: user-service
@@ -69,6 +72,7 @@ http:
         - strip-api-prefix
 
     # ---------------------- DEVICES ----------------------
+    
     devices-client-router:
       rule: "PathPrefix(`/api/devices/details`)"
       service: device-service
@@ -88,6 +92,7 @@ http:
         - strip-api-prefix
 
     # ------------------- DEVICES–USERS -------------------
+    
     devices-users-client-router:
       rule: "PathPrefix(`/api/devices-users/details`)"
       service: device-service
@@ -158,6 +163,7 @@ http:
         - websocket-upgrade
 
   # ---------------------- MIDDLEWARES --------------------
+  
   middlewares:
     strip-api-prefix:
       stripPrefix:
@@ -217,7 +223,9 @@ http:
     monitor-service:
       loadBalancer:
         servers:
-          - url: "http://backend-monitor:8080"
+          - url: "http://backend-monitor1:8080"
+          - url: "http://backend-monitor2:8080"
+          - url: "http://backend-monitor3:8080"
 
     cs-service:
       loadBalancer:
