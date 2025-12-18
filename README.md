@@ -1,4 +1,4 @@
-# DS Assignment 2
+# DS Assignment 3
 
 A modular energy management platform for clients and administrators to monitor and manage connected devices.
 
@@ -14,15 +14,18 @@ Built with **Spring Boot** microservices, **React (Vite)** frontend, deployed wi
 |------------|-------------|
 | **Traefik** | Reverse proxy handling routing, load balancing, and JWT-based verification |
 | **RabbitMQ** | Async messaging between services |
+| **Load Balancer Service** | Routes device data to monitoring replicas using hashing |
 | **Auth Service** | Handles registration, login, and JWT token generation & validation |
 | **User Service** | Manages users |
 | **Device Service** | Manages devices and assignments to users |
-| **Monitor Service** | Stores energy consumption history |
+| **Monitor Service (replicated 3x times)** | Stores energy consumption history |
+| **Customer Support Service** | Handles chat interactions between clients and administrators, and automated logic |
+| **WebSocket Service** | Listens for chat events and monitor events, and delivers real-time messages and notifications |
 | **Simulator Service** | Generates live energy consumption data for devices |
 | **Frontend (React)** | Dashboard for clients and admins |
 | **Databases** | Each backend has its own PostgreSQL instance for isolation |
 
-All services run on a shared `proxy-network` behind Traefik, with messaging handled via `mq-network`.
+All services (except **Load Balancer Service**) run on a shared `proxy-network` behind Traefik, with messaging handled via `mq-network`.
 
 ---
 
