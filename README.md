@@ -1,4 +1,4 @@
-# DS Assignment 3
+# Energy Management Platform
 
 A modular energy management platform for clients and administrators to monitor and manage connected devices.
 
